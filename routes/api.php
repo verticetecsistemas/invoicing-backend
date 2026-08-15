@@ -6,6 +6,14 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CredenciadosController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ConveniosController;
+use App\Http\Controllers\TabelasController;
+use App\Http\Controllers\TabelasItensController;
+use App\Http\Controllers\UnidadesController;
+use App\Http\Controllers\GruposController;
+use App\Http\Controllers\ConselhosController;
+use App\Http\Controllers\EspecialidadesController;
+use App\Http\Controllers\MedicosController;
+use App\Http\Controllers\PacientesController;
 use App\Utils\AppUtils;
 
 
@@ -32,6 +40,45 @@ Route::middleware('auth:sanctum')->prefix('convenios')->group(function() {
     Route::get('/{id}', [ConveniosController::class, 'show']);
     Route::put('/{id}', [ConveniosController::class, 'update']);
     Route::delete('/{id}', [ConveniosController::class, 'destroy']);
+});
+
+Route::middleware('auth:sanctum')->prefix('tabelas')->group(function() {
+    Route::post('/insert', [TabelasController::class, 'insert']);
+    Route::get('/index', [TabelasController::class, 'index']);
+    Route::get('/{id}', [TabelasController::class, 'show']);
+    Route::put('/update/{id}', [TabelasController::class, 'update']);
+    Route::delete('/{id}', [TabelasController::class, 'destroy']);
+    Route::post('/restore/{id}', [TabelasController::class, 'restore']);
+});
+
+Route::middleware('auth:sanctum')->prefix('tabelas-itens')->group(function() {
+    Route::post('/insert', [TabelasItensController::class, 'insert']);
+    Route::get('/index/{tabelaId}', [TabelasItensController::class, 'index']);
+    Route::get('/{id}', [TabelasItensController::class, 'show']);
+    Route::put('/update/{id}', [TabelasItensController::class, 'update']);
+    Route::delete('/{id}', [TabelasItensController::class, 'destroy']);
+    Route::post('/restore/{id}', [TabelasItensController::class, 'restore']);
+});
+
+Route::middleware('auth:sanctum')->get('/unidades/index', [UnidadesController::class, 'index']);
+Route::middleware('auth:sanctum')->get('/grupos/index', [GruposController::class, 'index']);
+Route::middleware('auth:sanctum')->get('/conselhos/index', [ConselhosController::class, 'index']);
+Route::middleware('auth:sanctum')->get('/especialidades/index', [EspecialidadesController::class, 'index']);
+
+Route::middleware('auth:sanctum')->prefix('medicos')->group(function () {
+    Route::get('/index', [MedicosController::class, 'index']);
+    Route::post('/insert', [MedicosController::class, 'insert']);
+    Route::put('/update/{id}', [MedicosController::class, 'update']);
+    Route::delete('/{id}', [MedicosController::class, 'delete']);
+    Route::post('/restore/{id}', [MedicosController::class, 'restore']);
+});
+
+Route::middleware('auth:sanctum')->prefix('pacientes')->group(function () {
+    Route::get('/index', [PacientesController::class, 'index']);
+    Route::post('/insert', [PacientesController::class, 'insert']);
+    Route::put('/update/{id}', [PacientesController::class, 'update']);
+    Route::delete('/{id}', [PacientesController::class, 'delete']);
+    Route::post('/restore/{id}', [PacientesController::class, 'restore']);
 });
 
 Route::middleware('auth:sanctum')->get('/restoreEstados', [AppUtils::class , 'restoreEstados']);
