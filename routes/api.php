@@ -14,6 +14,7 @@ use App\Http\Controllers\ConselhosController;
 use App\Http\Controllers\EspecialidadesController;
 use App\Http\Controllers\MedicosController;
 use App\Http\Controllers\PacientesController;
+use App\Http\Controllers\CredenciadosConveniosController;
 use App\Utils\AppUtils;
 
 
@@ -79,6 +80,15 @@ Route::middleware('auth:sanctum')->prefix('pacientes')->group(function () {
     Route::put('/update/{id}', [PacientesController::class, 'update']);
     Route::delete('/{id}', [PacientesController::class, 'delete']);
     Route::post('/restore/{id}', [PacientesController::class, 'restore']);
+});
+
+Route::middleware('auth:sanctum')->prefix('credenciados-convenios')->group(function() {
+    Route::post('/create', [CredenciadosConveniosController::class, 'create']);
+    Route::get('/index/{credenciadoId}', [CredenciadosConveniosController::class, 'index']);
+    Route::get('/{id}', [CredenciadosConveniosController::class, 'show']);
+    Route::put('/{id}', [CredenciadosConveniosController::class, 'update']);
+    Route::delete('/{id}', [CredenciadosConveniosController::class, 'destroy']);
+    Route::post('/restore/{id}', [CredenciadosConveniosController::class, 'restore']);
 });
 
 Route::middleware('auth:sanctum')->get('/restoreEstados', [AppUtils::class , 'restoreEstados']);

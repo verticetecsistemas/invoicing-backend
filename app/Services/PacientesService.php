@@ -71,6 +71,7 @@ class PacientesService
             'data_nascimento' => 'nullable|date',
             'titular' => 'nullable|integer|boolean',
             'observacoes' => 'nullable|string',
+            'nome_titular' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {

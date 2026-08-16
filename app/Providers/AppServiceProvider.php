@@ -19,6 +19,8 @@ use App\Repositories\Contracts\MedicosRepositoryInterface;
 use App\Repositories\MedicosRepository;
 use App\Repositories\Contracts\PacientesRepositoryInterface;
 use App\Repositories\PacientesRepository;
+use App\Repositories\Contracts\CredenciadosConveniosRepositoryInterface;
+use App\Repositories\CredenciadosConveniosRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GruposRepositoryInterface::class, GruposRepository::class);
         $this->app->bind(MedicosRepositoryInterface::class, MedicosRepository::class);
         $this->app->bind(PacientesRepositoryInterface::class, PacientesRepository::class);
+        $this->app->bind(CredenciadosConveniosRepositoryInterface::class, CredenciadosConveniosRepository::class);
     }
 
     /**

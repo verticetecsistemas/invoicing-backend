@@ -20,6 +20,7 @@ class Pacientes extends Model
         'data_nascimento',
         'titular',
         'observacoes',
+        'nome_titular',
     ];
 
     protected $appends = [
