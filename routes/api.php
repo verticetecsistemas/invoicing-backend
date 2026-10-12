@@ -13,6 +13,7 @@ use App\Http\Controllers\GruposController;
 use App\Http\Controllers\ConselhosController;
 use App\Http\Controllers\EspecialidadesController;
 use App\Http\Controllers\MedicosController;
+use App\Http\Controllers\GuiasController;
 use App\Http\Controllers\PacientesController;
 use App\Http\Controllers\CredenciadosConveniosController;
 use App\Utils\AppUtils;
@@ -29,10 +30,11 @@ Route::middleware('auth:sanctum')->prefix('users')->group(function() {
 });
 
 Route::middleware('auth:sanctum')->prefix('credenciados')->group(function() {
-    Route::middleware('auth:sanctum')->post('/create',[CredenciadosController::class, 'create']);
-    /* Route::middleware('auth:sanctum')->get('/{id}', [CredenciadosController::class, 'restore']); */
-    Route::middleware('auth:sanctum')->get('index', [CredenciadosController::class, 'index']);
-    Route::middleware('auth:sanctum')->put('/{id}', [CredenciadosController::class, 'update']);
+    Route::post('/create',[CredenciadosController::class, 'create']);
+    Route::get('index', [CredenciadosController::class, 'index']);
+    Route::put('/{id}', [CredenciadosController::class, 'update']);
+    Route::delete('/{id}', [CredenciadosController::class, 'destroy']);
+    Route::get('/restore/{id}', [CredenciadosController::class, 'restore']);
 });
 
 Route::middleware('auth:sanctum')->prefix('convenios')->group(function() {
@@ -66,6 +68,16 @@ Route::middleware('auth:sanctum')->get('/grupos/index', [GruposController::class
 Route::middleware('auth:sanctum')->get('/conselhos/index', [ConselhosController::class, 'index']);
 Route::middleware('auth:sanctum')->get('/especialidades/index', [EspecialidadesController::class, 'index']);
 
+Route::middleware('auth:sanctum')->prefix('guias')->group(function () {
+    Route::get('/index', [GuiasController::class, 'index']);
+    Route::get('/{id}/consultas', [GuiasController::class, 'consultas']);
+    Route::get('/{id}', [GuiasController::class, 'show']);
+    Route::post('/insert', [GuiasController::class, 'insert']);
+    Route::put('/update/{id}', [GuiasController::class, 'update']);
+    Route::put('/{id}', [GuiasController::class, 'update']);
+    Route::delete('/{id}', [GuiasController::class, 'delete']);
+});
+
 Route::middleware('auth:sanctum')->prefix('medicos')->group(function () {
     Route::get('/index', [MedicosController::class, 'index']);
     Route::post('/insert', [MedicosController::class, 'insert']);
@@ -85,6 +97,7 @@ Route::middleware('auth:sanctum')->prefix('pacientes')->group(function () {
 Route::middleware('auth:sanctum')->prefix('credenciados-convenios')->group(function() {
     Route::post('/create', [CredenciadosConveniosController::class, 'create']);
     Route::get('/index/{credenciadoId}', [CredenciadosConveniosController::class, 'index']);
+    Route::get('/buscar/{credenciadoId}/{convenioId}', [CredenciadosConveniosController::class, 'showByCredenciadoAndConvenio']);
     Route::get('/{id}', [CredenciadosConveniosController::class, 'show']);
     Route::put('/{id}', [CredenciadosConveniosController::class, 'update']);
     Route::delete('/{id}', [CredenciadosConveniosController::class, 'destroy']);

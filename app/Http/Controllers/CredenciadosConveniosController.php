@@ -40,6 +40,39 @@ class CredenciadosConveniosController extends Controller
     }
 
     /**
+     * Buscar convênio do credenciado por credenciado e convênio
+     *
+     * @param int $credenciadoId
+     * @param int $convenioId
+     * @return JsonResponse
+     */
+    public function showByCredenciadoAndConvenio(int $credenciadoId, int $convenioId): JsonResponse
+    {
+        try {
+            $credenciadoConvenio = $this->credenciadosConveniosService->getCredenciadoConvenioByCredenciadoAndConvenio($credenciadoId, $convenioId);
+
+            if (!$credenciadoConvenio) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Convênio do credenciado não encontrado.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $credenciadoConvenio
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Erro ao buscar convênio do credenciado: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao buscar convênio do credenciado.'
+            ], 500);
+        }
+    }
+
+    /**
      * Criar um novo convênio do credenciado (e sua tabela vinculada)
      *
      * @param Request $request

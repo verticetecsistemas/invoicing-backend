@@ -46,6 +46,11 @@ class CredenciadosConveniosService
         return $this->credenciadosConveniosRepository->findByCredenciadoId($credenciadoId);
     }
 
+    public function getCredenciadoConvenioByCredenciadoAndConvenio(int $credenciadoId, int $convenioId): ?CredenciadosConvenios
+    {
+        return $this->credenciadosConveniosRepository->findByCredenciadoAndConvenio($credenciadoId, $convenioId);
+    }
+
     public function updateCredenciadoConvenio(int $id, array $data): CredenciadosConvenios
     {
         $this->validate($data, true);

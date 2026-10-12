@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -19,6 +20,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'empresa_id',
         'name',
         'email',
         'password',
@@ -57,5 +59,10 @@ class User extends Authenticatable
             'credenciado_id'
         )->withPivot('permissao')
          ->withTimestamps();
+    }
+
+    public function empresa(): BelongsTo
+    {
+        return $this->belongsTo(Empresas::class, 'empresa_id');
     }
 }

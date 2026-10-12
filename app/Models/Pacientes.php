@@ -2,20 +2,24 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToEmpresa;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pacientes extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToEmpresa;
 
     protected $table = 'pacientes';
     protected $fillable = [
+        'empresa_id',
         'nome',
         'nome_social',
         'convenio_id',
         'matricula',
+        'validade_carteira',
         'numero_sus',
         'data_nascimento',
         'titular',

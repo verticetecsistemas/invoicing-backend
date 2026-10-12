@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToEmpresa;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class Credenciados extends Model
 {
     //
-    use HasFactory;
+    use HasFactory, SoftDeletes, BelongsToEmpresa;
     protected $table = 'credenciados';
     protected $primaryKey = 'id';
 
-    protected $fillable = ['tipo',
+    protected $fillable = ['empresa_id', 'tipo',
      'cnpj_cpf',
      'razao_social_nome',
      'nome_fantasia_apelido',
@@ -32,7 +34,8 @@ class Credenciados extends Model
      'email',
      'observacoes',
      'avatar',
-     'credenciado_fat_id'
+     'credenciado_fat_id',
+     'executante_id'
     ];
 
     public function users()
@@ -45,5 +48,4 @@ class Credenciados extends Model
         )->withPivot('permissao')
          ->withTimestamps();
     }
-
 }

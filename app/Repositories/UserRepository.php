@@ -5,6 +5,8 @@ namespace App\Repositories;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserRepository implements UserRepositoryInterface
@@ -37,6 +39,11 @@ class UserRepository implements UserRepositoryInterface
             $data['password'] = Hash::make($data['password']);
         }
 
+        $empresaId = Auth::user()?->empresa_id;
+        if ($empresaId) {
+            $data['empresa_id'] = $empresaId;
+        }
+
         return $this->model->create($data);
     }
 
@@ -48,7 +55,7 @@ class UserRepository implements UserRepositoryInterface
      */
     public function findById(int $id): ?User
     {
-        return $this->model->find($id);
+        return $this->scopedQuery()->find($id);
     }
 
     /**
@@ -69,7 +76,7 @@ class UserRepository implements UserRepositoryInterface
      */
     public function all(): Collection
     {
-        return $this->model->all();
+        return $this->scopedQuery()->get();
     }
 
     /**
@@ -110,5 +117,19 @@ class UserRepository implements UserRepositoryInterface
         }
 
         return $user->delete();
+    }
+
+    private function scopedQuery(): Builder
+    {
+        $query = $this->model->newQuery();
+        $logado = Auth::user();
+
+        if ($logado) {
+            $logado->empresa_id
+                ? $query->where('empresa_id', $logado->empresa_id)
+                : $query->whereNull('empresa_id');
+        }
+
+        return $query;
     }
 }

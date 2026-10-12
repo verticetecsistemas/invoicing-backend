@@ -22,6 +22,7 @@ class CredenciadosConvenios extends Model
         'entrega_consulta',
         'entrega_sadt',
         'entrega_honorario',
+        'codigo_consulta',
     ];
 
     protected $appends = ['nome_convenio'];

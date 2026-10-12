@@ -20,17 +20,25 @@ class CredenciadosController extends Controller
         $credenciados = User::where('id', Auth::id())->with('credenciados')->get();
         return response()->json(['success' => true, 'data' => $credenciados], 201);
     }
+    public function destroy($id)
+    {
+        $credenciado = Credenciados::find($id);
+        if (!$credenciado) {
+            return response()->json(['success' => false, 'message' => 'Credenciado não encontrado.'], 404);
+        }
+        $credenciado->delete();
+        return response()->json(['success' => true, 'message' => 'Credenciado excluído com sucesso.']);
+    }
+
     public function restore($id)
     {
         $credenciado = Credenciados::find($id);
-        if ($credenciado) {
-            $credenciado->restore();
-            return redirect()->back()->with('success', 'Credenciado restaurado com sucesso.');
-        } else {
-            return redirect()->back()->with('error', 'Credenciado não encontrado.');
+        if (!$credenciado) {
+            return response()->json(['success' => false, 'message' => 'Credenciado não encontrado.'], 404);
         }
+        $credenciado->restore();
+        return response()->json(['success' => true, 'data' => $credenciado]);
     }
-
     public function create(Request $request)
     {
         $validated = $request->validate([

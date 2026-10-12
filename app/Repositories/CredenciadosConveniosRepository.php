@@ -39,6 +39,14 @@ class CredenciadosConveniosRepository implements CredenciadosConveniosRepository
             ->get();
     }
 
+    public function findByCredenciadoAndConvenio(int $credenciadoId, int $convenioId): ?CredenciadosConvenios
+    {
+        return $this->model->with(['tabelas', 'convenio'])
+            ->where('credenciado_id', $credenciadoId)
+            ->where('convenio_id', $convenioId)
+            ->first();
+    }
+
     public function update(int $id, array $data): bool
     {
         $credenciadoConvenio = $this->model->find($id);
