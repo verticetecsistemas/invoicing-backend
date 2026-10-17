@@ -14,6 +14,8 @@ use App\Http\Controllers\ConselhosController;
 use App\Http\Controllers\EspecialidadesController;
 use App\Http\Controllers\MedicosController;
 use App\Http\Controllers\GuiasController;
+use App\Http\Controllers\IaintegrationController;
+use App\Http\Controllers\IaintegrationProcessingController;
 use App\Http\Controllers\PacientesController;
 use App\Http\Controllers\CredenciadosConveniosController;
 use App\Utils\AppUtils;
@@ -77,6 +79,15 @@ Route::middleware('auth:sanctum')->prefix('guias')->group(function () {
     Route::put('/{id}', [GuiasController::class, 'update']);
     Route::delete('/{id}', [GuiasController::class, 'delete']);
 });
+
+Route::prefix('iaintegration')->group(function () {
+    Route::post('/insert', [IaintegrationController::class, 'insert']);
+});
+
+Route::middleware('auth:sanctum')->post(
+    '/iaintegration/process',
+    [IaintegrationProcessingController::class, 'process']
+);
 
 Route::middleware('auth:sanctum')->prefix('medicos')->group(function () {
     Route::get('/index', [MedicosController::class, 'index']);

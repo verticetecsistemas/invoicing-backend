@@ -26,6 +26,7 @@ class PacientesRepository implements PacientesRepositoryInterface
     {
         return $this->model
             ->with('convenio:id,razao_social')
+            ->orderBy('nome', 'asc')
             ->get();
     }
 

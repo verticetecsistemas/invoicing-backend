@@ -17,8 +17,13 @@ class CredenciadosController extends Controller
     public function index()
     {
         Log::info('Buscando credenciados para usuário', ['user_id' => Auth::id()]);
-        $credenciados = User::where('id', Auth::id())->with('credenciados')->get();
-        return response()->json(['success' => true, 'data' => $credenciados], 201);
+        $user = User::where('id', Auth::id())->with(['credenciados', 'empresa'])->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Usuário não encontrado.'], 404);
+        }
+
+        return response()->json(['success' => true, 'data' => $user], 200);
     }
     public function destroy($id)
     {
