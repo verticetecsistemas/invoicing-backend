@@ -23,10 +23,16 @@ class IaintegrationProcessor
 
     public function processPending(): array
     {
+        $now = now();
         $ids = Iaintegration::query()
             ->where('integrada', 0)
+            ->whereBetween('created_at', [$now->copy()->subDays(3), $now])
             ->orderBy('id')
             ->pluck('id');
+
+        IaintegrationDetail::query()
+            ->whereIn('iaintegration_id', $ids)
+            ->delete();
 
         $result = [
             'total' => $ids->count(),
@@ -124,14 +130,19 @@ class IaintegrationProcessor
             throw new \DomainException('guia em duplicidade');
         }
 
+        $numeroConselho = (string) $integration->numero_conselho;
+        if (str_starts_with($numeroConselho, '52')) {
+            $numeroConselho = substr($numeroConselho, 2);
+        }
+
         $medico = Medicos::query()
-            ->where('numero_conselho', $integration->numero_conselho)
+            ->where('numero_conselho', $numeroConselho)
             ->where('uf_conselho', self::UF_CONSELHO)
             ->first();
 
         if (!$medico) {
             throw new \DomainException(
-                "Médico com conselho '{$integration->numero_conselho}/".self::UF_CONSELHO."' não encontrado."
+                "Médico com conselho '{$numeroConselho}/".self::UF_CONSELHO."' não encontrado."
             );
         }
 

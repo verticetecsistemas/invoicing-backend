@@ -10,5 +10,6 @@ class Conselhos extends Model
     protected $fillable = [
         'nome',
         'sigla',
+        'codigo'
     ];
 }

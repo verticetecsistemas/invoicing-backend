@@ -3,6 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Iaintegration;
+use App\Models\IaintegrationDetail;
+use App\Models\Convenios;
+use App\Models\Credenciados;
+use App\Models\CredenciadosConvenios;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -71,5 +75,100 @@ class IaintegrationControllerTest extends TestCase
             ->assertJsonPath('success', false);
 
         $this->assertDatabaseCount('iaintegration', 0);
+    }
+
+    public function test_index_defaults_to_today_and_returns_integration_status_and_error_details(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $convenio = Convenios::create([
+            'cnpj' => '12345678000190',
+            'razao_social' => 'Convênio Teste',
+            'nome_fantasia' => 'Convênio',
+            'ans' => '421715',
+        ]);
+        $credenciado = Credenciados::create([
+            'tipo' => 'J',
+            'cnpj_cpf' => '98765432000110',
+            'razao_social_nome' => 'Clínica Teste LTDA',
+            'nome_fantasia_apelido' => 'Clínica',
+            'cep' => '12345678',
+            'logradouro' => 'Rua Teste',
+            'numero' => '1',
+            'bairro' => 'Centro',
+            'cidade' => 'Rio de Janeiro',
+            'uf' => 'RJ',
+        ]);
+        CredenciadosConvenios::create([
+            'credenciado_id' => $credenciado->id,
+            'convenio_id' => $convenio->id,
+            'codigo_convenio' => '299421',
+        ]);
+
+        $failedIntegration = Iaintegration::create([
+            'arquivo' => 'GUIA.pdf',
+            'pagina' => 1,
+            'codigo_ans' => '421715',
+            'codigo_operadora' => '299421',
+            'guia_prestador' => 'GUIA-ERRO',
+            'integrada' => 0,
+        ]);
+        IaintegrationDetail::create([
+            'iaintegration_id' => $failedIntegration->id,
+            'exception_class' => 'DomainException',
+            'message' => "Médico com conselho '702129/RJ' não encontrado.",
+        ]);
+        IaintegrationDetail::create([
+            'iaintegration_id' => $failedIntegration->id,
+            'exception_class' => 'DomainException',
+            'message' => 'O vínculo de convênio não possui código e valor de consulta cadastrados.',
+        ]);
+
+        $pendingIntegration = Iaintegration::create([
+            'arquivo' => 'GUIA.pdf',
+            'pagina' => 2,
+            'guia_prestador' => 'GUIA-PENDENTE',
+            'integrada' => 0,
+        ]);
+        $pendingIntegration->created_at = now()->subDay();
+        $pendingIntegration->save();
+
+        $this->getJson('/api/iaintegration/index')
+            ->assertOk()
+            ->assertJsonPath('data_selecionada', now()->toDateString())
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.data', now()->toDateString())
+            ->assertJsonPath('data.0.credenciado', 'Clínica')
+            ->assertJsonPath('data.0.convenio', 'Convênio')
+            ->assertJsonPath('data.0.guia', 'GUIA-ERRO')
+            ->assertJsonPath('data.0.status', 'erro')
+            ->assertJsonCount(1, 'data.0.detalhes')
+            ->assertJsonPath('data.0.detalhes.0.classe', 'DomainException')
+            ->assertJsonPath('data.0.detalhes.0.mensagem', 'O vínculo de convênio não possui código e valor de consulta cadastrados.');
+    }
+
+    public function test_index_filters_by_selected_date_and_rejects_invalid_date(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $integration = Iaintegration::create([
+            'arquivo' => 'GUIA.pdf',
+            'pagina' => 1,
+            'guia_prestador' => 'GUIA-INTEGRADA',
+        ]);
+        $integration->integrada = 1;
+        $integration->created_at = now()->subDay();
+        $integration->save();
+
+        $this->getJson('/api/iaintegration/index?data='.now()->subDay()->toDateString())
+            ->assertOk()
+            ->assertJsonPath('data_selecionada', now()->subDay()->toDateString())
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.status', 'integrado')
+            ->assertJsonPath('data.0.detalhes', []);
+
+        $this->getJson('/api/iaintegration/index?data=17-10-2026')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('data');
     }
 }

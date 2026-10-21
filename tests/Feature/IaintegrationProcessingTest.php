@@ -29,16 +29,41 @@ class IaintegrationProcessingTest extends TestCase
         $user = User::factory()->create(['id' => 1]);
         Sanctum::actingAs($user);
         $integration = $this->createPendingIntegration();
+        $outsideWindow = Iaintegration::create([
+            'arquivo' => 'GUIA.pdf',
+            'pagina' => 2,
+            'guia_prestador' => 'GUIA-MAIS-ANTIGA-QUE-3-DIAS',
+            'integrada' => 0,
+        ]);
+        $outsideWindow->created_at = now()->subDays(4);
+        $outsideWindow->save();
+        $alreadyIntegrated = Iaintegration::create([
+            'arquivo' => 'GUIA.pdf',
+            'pagina' => 3,
+            'guia_prestador' => 'GUIA-JA-INTEGRADA',
+        ]);
+        $alreadyIntegrated->integrada = 1;
+        $alreadyIntegrated->created_at = now()->subDays(2);
+        $alreadyIntegrated->save();
 
         $response = $this->postJson('/api/iaintegration/process');
 
         $response->assertOk()
             ->assertJsonPath('success', true)
+            ->assertJsonPath('data.total', 1)
             ->assertJsonPath('data.processed', 1)
             ->assertJsonPath('data.failed', 0);
 
         $this->assertDatabaseHas('iaintegration', [
             'id' => $integration->id,
+            'integrada' => 1,
+        ]);
+        $this->assertDatabaseHas('iaintegration', [
+            'id' => $outsideWindow->id,
+            'integrada' => 0,
+        ]);
+        $this->assertDatabaseHas('iaintegration', [
+            'id' => $alreadyIntegrated->id,
             'integrada' => 1,
         ]);
         $this->assertDatabaseCount('iaintegration_details', 0);
@@ -68,6 +93,26 @@ class IaintegrationProcessingTest extends TestCase
         $this->assertSame('2026-09-30', $paciente->getRawOriginal('validade_carteira'));
     }
 
+    public function test_process_discards_52_prefix_from_crm_when_finding_doctor(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['id' => 1]));
+        $integration = $this->createPendingIntegration();
+        $integration->numero_conselho = '521203053';
+        $integration->save();
+
+        $this->postJson('/api/iaintegration/process')
+            ->assertOk()
+            ->assertJsonPath('data.processed', 1)
+            ->assertJsonPath('data.failed', 0);
+
+        $this->assertDatabaseHas('iaintegration', [
+            'id' => $integration->id,
+            'numero_conselho' => '521203053',
+            'integrada' => 1,
+        ]);
+        $this->assertSame('1203053', Medicos::query()->firstOrFail()->numero_conselho);
+    }
+
     public function test_missing_existing_doctor_keeps_integration_pending(): void
     {
         $user = User::factory()->create(['id' => 1]);
@@ -94,11 +139,22 @@ class IaintegrationProcessingTest extends TestCase
         $this->assertDatabaseCount('pacientes', 0);
         $this->assertDatabaseCount('medicos', 0);
 
+        $integration->numero_conselho = '7654321';
+        $integration->save();
+
         $this->postJson('/api/iaintegration/process')
             ->assertStatus(207)
             ->assertJsonPath('data.failed', 1);
 
-        $this->assertSame(2, IaintegrationDetail::where('iaintegration_id', $integration->id)->count());
+        $this->assertSame(1, IaintegrationDetail::where('iaintegration_id', $integration->id)->count());
+        $this->assertDatabaseHas('iaintegration_details', [
+            'iaintegration_id' => $integration->id,
+            'message' => "Médico com conselho '7654321/RJ' não encontrado.",
+        ]);
+        $this->assertDatabaseMissing('iaintegration_details', [
+            'iaintegration_id' => $integration->id,
+            'message' => "Médico com conselho '1203053/RJ' não encontrado.",
+        ]);
     }
 
     public function test_duplicate_guide_is_rejected_and_recorded_as_integration_error(): void
@@ -222,7 +278,7 @@ class IaintegrationProcessingTest extends TestCase
             ]);
         }
 
-        return Iaintegration::create([
+        $integration = Iaintegration::create([
             'arquivo' => 'GUIA.pdf',
             'pagina' => 1,
             'codigo_ans' => '421715',
@@ -241,5 +297,9 @@ class IaintegrationProcessingTest extends TestCase
             'regime_atendimento' => '01',
             'saude_ocupacional' => null,
         ]);
+        $integration->created_at = now()->subDays(2);
+        $integration->save();
+
+        return $integration;
     }
 }

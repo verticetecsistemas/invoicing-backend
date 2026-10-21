@@ -39,6 +39,24 @@ class CredenciadosConveniosRepository implements CredenciadosConveniosRepository
             ->get();
     }
 
+    public function findNamesByCredenciadoId(int $credenciadoId): array
+    {
+        return $this->model->where('credenciado_id', $credenciadoId)
+            ->whereHas('convenio')
+            ->with('convenio:id,nome_fantasia,razao_social')
+            ->get()
+            ->map(fn (CredenciadosConvenios $credenciadoConvenio) => [
+                'convenio_id' => $credenciadoConvenio->convenio_id,
+                'nome' => $credenciadoConvenio->nome_convenio,
+                'entrega_consulta' => $credenciadoConvenio->entrega_consulta,
+                'entrega_sadt' => $credenciadoConvenio->entrega_sadt,
+                'entrega_honorario' => $credenciadoConvenio->entrega_honorario,
+            ])
+            ->filter(fn (array $convenio) => $convenio['nome'] !== null)
+            ->values()
+            ->all();
+    }
+
     public function findByCredenciadoAndConvenio(int $credenciadoId, int $convenioId): ?CredenciadosConvenios
     {
         return $this->model->with(['tabelas', 'convenio'])

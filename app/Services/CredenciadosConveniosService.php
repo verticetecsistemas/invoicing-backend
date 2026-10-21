@@ -46,6 +46,11 @@ class CredenciadosConveniosService
         return $this->credenciadosConveniosRepository->findByCredenciadoId($credenciadoId);
     }
 
+    public function getConvenioNamesByCredenciadoId(int $credenciadoId): array
+    {
+        return $this->credenciadosConveniosRepository->findNamesByCredenciadoId($credenciadoId);
+    }
+
     public function getCredenciadoConvenioByCredenciadoAndConvenio(int $credenciadoId, int $convenioId): ?CredenciadosConvenios
     {
         return $this->credenciadosConveniosRepository->findByCredenciadoAndConvenio($credenciadoId, $convenioId);

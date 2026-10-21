@@ -18,6 +18,7 @@ use App\Http\Controllers\IaintegrationController;
 use App\Http\Controllers\IaintegrationProcessingController;
 use App\Http\Controllers\PacientesController;
 use App\Http\Controllers\CredenciadosConveniosController;
+use App\Http\Controllers\LotesController;
 use App\Utils\AppUtils;
 
 
@@ -84,6 +85,11 @@ Route::prefix('iaintegration')->group(function () {
     Route::post('/insert', [IaintegrationController::class, 'insert']);
 });
 
+Route::middleware('auth:sanctum')->get(
+    '/iaintegration/index',
+    [IaintegrationController::class, 'index']
+);
+
 Route::middleware('auth:sanctum')->post(
     '/iaintegration/process',
     [IaintegrationProcessingController::class, 'process']
@@ -105,8 +111,20 @@ Route::middleware('auth:sanctum')->prefix('pacientes')->group(function () {
     Route::post('/restore/{id}', [PacientesController::class, 'restore']);
 });
 
+Route::middleware('auth:sanctum')->prefix('lotes')->group(function () {
+    Route::get('/index/{credenciado_id}', [LotesController::class, 'index']);
+    Route::get('/proximo-numero', [LotesController::class, 'proximoNumero']);
+    Route::get('/xmlConsulta/{id}', [LotesController::class, 'xmlConsulta']);
+    Route::get('/validar/{id}/{versao}', [LotesController::class, 'validar']);
+    Route::post('/insert', [LotesController::class, 'insert']);
+    Route::post('/processar/{id}', [LotesController::class, 'processar']);
+    Route::put('/update/{id}', [LotesController::class, 'update']);
+    Route::post('/restore/{id}', [LotesController::class, 'restore']);
+});
+
 Route::middleware('auth:sanctum')->prefix('credenciados-convenios')->group(function() {
     Route::post('/create', [CredenciadosConveniosController::class, 'create']);
+    Route::get('/nomes/{credenciadoId}', [CredenciadosConveniosController::class, 'names']);
     Route::get('/index/{credenciadoId}', [CredenciadosConveniosController::class, 'index']);
     Route::get('/buscar/{credenciadoId}/{convenioId}', [CredenciadosConveniosController::class, 'showByCredenciadoAndConvenio']);
     Route::get('/{id}', [CredenciadosConveniosController::class, 'show']);

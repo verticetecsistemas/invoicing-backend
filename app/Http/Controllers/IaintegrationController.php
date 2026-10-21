@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Iaintegration;
+use App\Models\Guias;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +12,93 @@ use Illuminate\Validation\ValidationException;
 
 class IaintegrationController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'data' => ['sometimes', 'required', 'date_format:Y-m-d'],
+        ]);
+        $date = $validated['data'] ?? now()->toDateString();
+
+        $integrations = Iaintegration::query()
+            ->whereDate('created_at', $date)
+            ->with(['details' => fn ($query) => $query->orderByDesc('id')])
+            ->orderByDesc('id')
+            ->get();
+
+        $mappings = collect();
+        $guides = collect();
+
+        if ($integrations->isNotEmpty()) {
+            $mappings = DB::table('credenciados_convenios as cc')
+                ->join('convenios as cv', 'cv.id', '=', 'cc.convenio_id')
+                ->join('credenciados as cr', 'cr.id', '=', 'cc.credenciado_id')
+                ->whereNull('cc.deleted_at')
+                ->whereNull('cr.deleted_at')
+                ->whereIn('cv.ans', $integrations->pluck('codigo_ans')->filter()->unique())
+                ->whereIn('cc.codigo_convenio', $integrations->pluck('codigo_operadora')->filter()->unique())
+                ->select([
+                    'cv.ans',
+                    'cc.codigo_convenio',
+                    'cc.credenciado_id',
+                    'cc.convenio_id',
+                    'cr.nome_fantasia_apelido as credenciado',
+                    'cr.razao_social_nome as credenciado_razao_social',
+                    'cv.nome_fantasia as convenio',
+                    'cv.razao_social as convenio_razao_social',
+                ])
+                ->get()
+                ->groupBy(fn (object $mapping) => $mapping->ans.'|'.$mapping->codigo_convenio);
+
+            $guides = Guias::query()
+                ->with(['credenciado', 'convenio'])
+                ->whereIn('numero', $integrations->pluck('guia_prestador')->filter()->unique())
+                ->get()
+                ->groupBy('numero');
+        }
+
+        $data = $integrations->map(function (Iaintegration $integration) use ($mappings, $guides): array {
+            $candidates = $mappings->get($integration->codigo_ans.'|'.$integration->codigo_operadora, collect());
+            $guide = $guides->get($integration->guia_prestador, collect())
+                ->first(function ($guide) use ($candidates): bool {
+                    return $candidates->contains(fn (object $mapping): bool =>
+                        (int) $mapping->credenciado_id === (int) $guide->credenciado_id
+                        && (int) $mapping->convenio_id === (int) $guide->convenio_id
+                    );
+                });
+            $mapping = $guide
+                ? $candidates->first(fn (object $candidate): bool =>
+                    (int) $candidate->credenciado_id === (int) $guide->credenciado_id
+                    && (int) $candidate->convenio_id === (int) $guide->convenio_id
+                )
+                : ($candidates->count() === 1 ? $candidates->first() : null);
+            $latestDetail = $integration->details->first();
+
+            return [
+                'data' => $integration->created_at->toDateString(),
+                'credenciado' => $mapping
+                    ? ($mapping->credenciado ?: $mapping->credenciado_razao_social)
+                    : null,
+                'convenio' => $mapping
+                    ? ($mapping->convenio ?: $mapping->convenio_razao_social)
+                    : null,
+                'guia' => $guide?->numero ?? $integration->guia_prestador,
+                'status' => $latestDetail
+                    ? 'erro'
+                    : ($integration->integrada ? 'integrado' : 'pendente'),
+                'detalhes' => $latestDetail ? [[
+                    'classe' => $latestDetail->exception_class,
+                    'mensagem' => $latestDetail->message,
+                ]] : [],
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'data_selecionada' => $date,
+        ]);
+    }
+
     public function insert(Request $request): JsonResponse
     {
         try {

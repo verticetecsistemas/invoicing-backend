@@ -40,6 +40,28 @@ class CredenciadosConveniosController extends Controller
     }
 
     /**
+     * Listar apenas os nomes dos convênios de um credenciado
+     */
+    public function names(int $credenciadoId): JsonResponse
+    {
+        try {
+            $nomes = $this->credenciadosConveniosService->getConvenioNamesByCredenciadoId($credenciadoId);
+
+            return response()->json([
+                'success' => true,
+                'data' => $nomes
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Erro ao listar nomes dos convênios do credenciado: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao listar nomes dos convênios do credenciado.'
+            ], 500);
+        }
+    }
+
+    /**
      * Buscar convênio do credenciado por credenciado e convênio
      *
      * @param int $credenciadoId

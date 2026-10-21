@@ -13,7 +13,7 @@ class EspecialidadesController extends Controller
         try {
             return response()->json([
                 'success' => true,
-                'data' => Especialidades::all(),
+                'data' => Especialidades::orderBy('nome')->get(),
             ]);
         } catch (\Exception $exception) {
             Log::error('Erro ao listar especialidades: ' . $exception->getMessage());

@@ -36,4 +36,9 @@ class GuiasConsulta extends Model
     {
         return $this->belongsTo(Guias::class, 'guia_id');
     }
+
+    public function executante(): BelongsTo
+    {
+        return $this->belongsTo(Medicos::class, 'executante_id');
+    }
 }

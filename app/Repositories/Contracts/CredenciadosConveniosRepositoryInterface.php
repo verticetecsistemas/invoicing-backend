@@ -17,6 +17,8 @@ interface CredenciadosConveniosRepositoryInterface
 
     public function findByCredenciadoId(int $credenciadoId): Collection;
 
+    public function findNamesByCredenciadoId(int $credenciadoId): array;
+
     public function findByCredenciadoAndConvenio(int $credenciadoId, int $convenioId): ?CredenciadosConvenios;
 
     public function update(int $id, array $data): bool;
