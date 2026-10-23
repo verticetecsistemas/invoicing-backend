@@ -35,7 +35,7 @@ class Credenciados extends Model
      'observacoes',
      'avatar',
      'credenciado_fat_id',
-     'executante_id'
+     'executante_id',
     ];
 
     public function users()

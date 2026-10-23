@@ -23,6 +23,7 @@ class Convenios extends Model
         'observacao',
         'ans',
         'digitos_matricula',
-        'retorno_dias'
+        'retorno_dias',
+        'avatar'
     ];
 }

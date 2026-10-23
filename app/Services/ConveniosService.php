@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\Convenios;
 use App\Repositories\Contracts\ConveniosRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ConveniosService
@@ -51,6 +53,7 @@ class ConveniosService
             'ans' => 'nullable|string|max:50',
             'digitos_matricula' => 'nullable|integer',
             'retorno_dias' => 'nullable|integer',
+            'avatar' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -62,6 +65,10 @@ class ConveniosService
             throw ValidationException::withMessages([
                 'cnpj' => ['O CNPJ informado já está cadastrado.']
             ]);
+        }
+
+        if (array_key_exists('avatar', $data)) {
+            $data['avatar'] = $this->processAvatar($data['avatar']);
         }
 
         // Criar convênio
@@ -116,6 +123,7 @@ class ConveniosService
             'ans' => 'nullable|string|max:50',
             'digitos_matricula' => 'nullable|integer',
             'retorno_dias' => 'nullable|integer',
+            'avatar' => 'sometimes|nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -128,6 +136,10 @@ class ConveniosService
             throw ValidationException::withMessages([
                 'id' => ['Convênio não encontrado.']
             ]);
+        }
+
+        if (array_key_exists('avatar', $data)) {
+            $data['avatar'] = $this->processAvatar($data['avatar']);
         }
 
         // Atualizar convênio
@@ -154,5 +166,38 @@ class ConveniosService
         }
 
         return $this->conveniosRepository->delete($id);
+    }
+
+    private function processAvatar(?string $avatar): ?string
+    {
+        if ($avatar === null || $avatar === '') {
+            return null;
+        }
+
+        if (strpos($avatar, 'data:image/') !== 0) {
+            return $avatar;
+        }
+
+        if (!preg_match('/^data:image\/(jpeg|jpg|png|gif|webp);base64,([A-Za-z0-9+\/]+={0,2})$/i', $avatar, $matches)) {
+            throw ValidationException::withMessages([
+                'avatar' => ['O avatar deve ser uma imagem base64 válida.']
+            ]);
+        }
+
+        $image = base64_decode($matches[2], true);
+        if ($image === false) {
+            throw ValidationException::withMessages([
+                'avatar' => ['O avatar deve ser uma imagem base64 válida.']
+            ]);
+        }
+
+        $extension = strtolower($matches[1]) === 'jpg' ? 'jpeg' : strtolower($matches[1]);
+        $path = 'avatar/avatar_' . Str::uuid() . '.' . $extension;
+
+        if (!Storage::disk('public')->put($path, $image)) {
+            throw new \RuntimeException('Não foi possível salvar o avatar do convênio.');
+        }
+
+        return $path;
     }
 }

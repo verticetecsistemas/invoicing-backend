@@ -48,6 +48,11 @@ class CredenciadosController extends Controller
     {
         $validated = $request->validate([
             'tipo' => 'nullable|string|max:50',
+            'cnpj_cpf' => 'nullable|string|max:14',
+            'razao_social_nome' => 'nullable|string|max:100',
+            'nome_fantasia_apelido' => 'nullable|string|max:100',
+            'logradouro' => 'nullable|string|max:100',
+            'uf' => 'nullable|string|max:2',
             'cnpj' => 'nullable|string|max:30',
             'razaoSocial' => 'nullable|string|max:255',
             'nomeFantasia' => 'nullable|string|max:255',
@@ -84,19 +89,19 @@ class CredenciadosController extends Controller
         // Mapear campos do request para os nomes das colunas do model
         $data = [
             'tipo' => $validated['tipo'] ?? null,
-            'cnpj_cpf' => $validated['cnpj'] ?? $validated['cpf'] ?? null,
-            'razao_social_nome' => $validated['razaoSocial'] ?? $validated['nome'] ?? null,
-            'nome_fantasia_apelido' => $validated['nomeFantasia'] ?? $validated['apelido'] ?? null,
+            'cnpj_cpf' => $validated['cnpj_cpf'] ?? $validated['cnpj'] ?? $validated['cpf'] ?? null,
+            'razao_social_nome' => $validated['razao_social_nome'] ?? $validated['razaoSocial'] ?? $validated['nome'] ?? null,
+            'nome_fantasia_apelido' => $validated['nome_fantasia_apelido'] ?? $validated['nomeFantasia'] ?? $validated['apelido'] ?? null,
             'inscricao_estadual' => $validated['inscricaoEstadual'] ?? null,
             'inscricao_municipal' => $validated['inscricaoMunicipal'] ?? null,
             'cnes' => $validated['cnes'] ?? null,
             'cep' => $validated['cep'] ?? null,
-            'logradouro' => $validated['endereco'] ?? null,
+            'logradouro' => $validated['logradouro'] ?? $validated['endereco'] ?? null,
             'numero' => $validated['numero'] ?? null,
             'complemento' => $validated['contato'] ?? null,
             'bairro' => $validated['bairro'] ?? null,
             'cidade' => $validated['cidade'] ?? null,
-            'uf' => $validated['estado'] ?? null,
+            'uf' => $validated['uf'] ?? $validated['estado'] ?? null,
             'telefone' => $validated['telefone'] ?? null,
             'celular' => $validated['celular'] ?? null,
             'email' => $validated['email'] ?? null,
@@ -123,6 +128,11 @@ class CredenciadosController extends Controller
 
         $validated = $request->validate([
             'tipo' => 'nullable|string|max:50',
+            'cnpj_cpf' => 'nullable|string|max:14',
+            'razao_social_nome' => 'nullable|string|max:100',
+            'nome_fantasia_apelido' => 'nullable|string|max:100',
+            'logradouro' => 'nullable|string|max:100',
+            'uf' => 'nullable|string|max:2',
             'cnpj' => 'nullable|string|max:30',
             'razaoSocial' => 'nullable|string|max:255',
             'nomeFantasia' => 'nullable|string|max:255',
@@ -175,28 +185,44 @@ class CredenciadosController extends Controller
             }
         }
 
-        // Mapear campos do request para os nomes das colunas do model
-        $data = [
-            'tipo' => $validated['tipo'] ?? null,
-            'cnpj_cpf' => $validated['cnpj'] ?? $validated['cpf'] ?? null,
-            'razao_social_nome' => $validated['razaoSocial'] ?? $validated['nome'] ?? null,
-            'nome_fantasia_apelido' => $validated['nomeFantasia'] ?? $validated['apelido'] ?? null,
-            'inscricao_estadual' => $validated['inscricaoEstadual'] ?? null,
-            'inscricao_municipal' => $validated['inscricaoMunicipal'] ?? null,
-            'cnes' => $validated['cnes'] ?? null,
-            'cep' => $validated['cep'] ?? null,
-            'logradouro' => $validated['endereco'] ?? null,
-            'numero' => $validated['numero'] ?? null,
-            'complemento' => $validated['contato'] ?? null,
-            'bairro' => $validated['bairro'] ?? null,
-            'cidade' => $validated['cidade'] ?? null,
-            'uf' => $validated['estado'] ?? null,
-            'telefone' => $validated['telefone'] ?? null,
-            'celular' => $validated['celular'] ?? null,
-            'email' => $validated['email'] ?? null,
-            'observacoes' => $validated['observacoes'] ?? null,
-            'avatar' => $avatarPath,
+        $fieldAliases = [
+            'tipo' => ['tipo'],
+            'cnpj_cpf' => ['cnpj_cpf', 'cnpj', 'cpf'],
+            'razao_social_nome' => ['razao_social_nome', 'razaoSocial', 'nome'],
+            'nome_fantasia_apelido' => ['nome_fantasia_apelido', 'nomeFantasia', 'apelido'],
+            'inscricao_estadual' => ['inscricaoEstadual'],
+            'inscricao_municipal' => ['inscricaoMunicipal'],
+            'cnes' => ['cnes'],
+            'cep' => ['cep'],
+            'logradouro' => ['logradouro', 'endereco'],
+            'numero' => ['numero'],
+            'complemento' => ['contato'],
+            'bairro' => ['bairro'],
+            'cidade' => ['cidade'],
+            'uf' => ['uf', 'estado'],
+            'telefone' => ['telefone'],
+            'celular' => ['celular'],
+            'email' => ['email'],
+            'observacoes' => ['observacoes'],
         ];
+
+        $data = [];
+        foreach ($fieldAliases as $attribute => $aliases) {
+            foreach ($aliases as $alias) {
+                if (!array_key_exists($alias, $validated)) {
+                    continue;
+                }
+
+                $value = $validated[$alias];
+                if ($attribute === 'logradouro' && $value === null) {
+                    $value = $credenciado->logradouro;
+                }
+
+                $data[$attribute] = $value;
+                break;
+            }
+        }
+        $data['avatar'] = $avatarPath;
 
         $credenciado->update($data);
 

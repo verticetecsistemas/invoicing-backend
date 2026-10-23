@@ -19,6 +19,7 @@ use App\Http\Controllers\IaintegrationProcessingController;
 use App\Http\Controllers\PacientesController;
 use App\Http\Controllers\CredenciadosConveniosController;
 use App\Http\Controllers\LotesController;
+use App\Http\Controllers\RelatoriosController;
 use App\Utils\AppUtils;
 
 
@@ -35,6 +36,7 @@ Route::middleware('auth:sanctum')->prefix('users')->group(function() {
 Route::middleware('auth:sanctum')->prefix('credenciados')->group(function() {
     Route::post('/create',[CredenciadosController::class, 'create']);
     Route::get('index', [CredenciadosController::class, 'index']);
+    Route::put('/update/{id}', [CredenciadosController::class, 'update']);
     Route::put('/{id}', [CredenciadosController::class, 'update']);
     Route::delete('/{id}', [CredenciadosController::class, 'destroy']);
     Route::get('/restore/{id}', [CredenciadosController::class, 'restore']);
@@ -120,6 +122,10 @@ Route::middleware('auth:sanctum')->prefix('lotes')->group(function () {
     Route::post('/processar/{id}', [LotesController::class, 'processar']);
     Route::put('/update/{id}', [LotesController::class, 'update']);
     Route::post('/restore/{id}', [LotesController::class, 'restore']);
+});
+
+Route::middleware('auth:sanctum')->prefix('relatorios')->group(function () {
+    Route::post('/repasse', [RelatoriosController::class, 'repasse']);
 });
 
 Route::middleware('auth:sanctum')->prefix('credenciados-convenios')->group(function() {
